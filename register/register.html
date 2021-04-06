@@ -1,0 +1,27 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+    <style>
+      table, th, td {
+          border: 1px solid black;
+      }
+</style>
+</head>
+<body>
+    <form>
+        Username: 
+        <input type="text" id="username"><br>
+        Email: 
+        <input type="email" id="email"><br>
+        Password: 
+        <input type="password" id="password"><br><br>
+        <input type="submit" onclick="registerUser()"><br>
+        
+    </form>
+    <span id="msg"></span>
+    <table  id="table"></table>
+    <script src="register.js"></script>
+</body>
+</html>

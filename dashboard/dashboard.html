@@ -1,0 +1,380 @@
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+    />
+    <title>Dashboard</title>
+    <style>
+      table,
+      th,
+      td {
+        border: 1px solid black;
+      }
+      #editform {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    Hello,
+    <h1 id="user"></h1>
+    <textarea placeholder="what's in your mind?" id="post" cols="30"></textarea
+    ><br /><br />
+    <button onclick="postComment()">Post</button>&nbsp;&nbsp;
+    <!--button onclick="getMyComments()">Myposts</button--><br /><br /><br /><br />
+    <span id="msg"></span>
+    <form id="editform">
+      Post: <input type="text" id="postdata" />&nbsp;
+      <input readonly id="postid" />&nbsp;
+      <input
+        id="replybtn"
+        type="submit"
+        value="post reply"
+        onclick="reply()"
+      />&nbsp;<input
+        type="submit"
+        id="updatebtn"
+        value="Update post"
+        onclick="updatethepost()"
+      />&nbsp;<input
+        type="submit"
+        id="editreplybtn"
+        value="Edit reply"
+        onclick="editreply()"
+      />
+    </form>
+    <br /><br /><br />
+
+    <ul id="list"></ul>
+    <script>
+      var replyIndex;
+      var postIndex;
+      var currentUser = localStorage.getItem("currentUser");
+      document.getElementById("user").innerHTML = currentUser;
+
+      if (localStorage.getItem("posts") == null) {
+        localStorage.setItem("posts", JSON.stringify([]));
+      }
+
+      getMyComments();
+      function postComment() {
+        event.preventDefault();
+        var postData = document.getElementById("post").value;
+
+        var post = {
+          likesCount: 0,
+          postContent: postData,
+          postedBy: currentUser,
+          postId: generateUniqueId(),
+          replies: [],
+          likedBy: [],
+          timeStamp: timeStamp(),
+        };
+        var allPosts = JSON.parse(localStorage.getItem("posts"));
+        allPosts.push(post);
+        localStorage.setItem("posts", JSON.stringify(allPosts));
+        document.getElementById("post").value = "";
+        getMyComments();
+      }
+
+      function generateUniqueId() {
+        if (localStorage.getItem("currentId") == null) {
+          localStorage.setItem("currentId", 0);
+        }
+        var currentId = parseInt(localStorage.getItem("currentId"));
+        currentId++;
+        localStorage.setItem("currentId", currentId);
+        return currentId;
+      }
+
+      function timeStamp() {
+        var formate = new Date();
+        var time = formate.getHours() + ":" + formate.getMinutes();
+        var day =
+          formate.getDate() +
+          "/" +
+          (formate.getMonth() + 1) +
+          "/" +
+          formate.getFullYear();
+        return time + "  " + day;
+      }
+
+      function getMyComments() {
+        document.getElementById("msg").innerHTML = "";
+        var list = document.getElementById("list");
+        //replylist = document.getElementById("re")
+        var allPosts = JSON.parse(localStorage.getItem("posts"));
+
+        //var tableheader = "<tr><th>posts</th><th>Edit</th><th>Delete</th></tr>";
+        //table.innerHTML = tableheader;
+
+        var list_items = "";
+        var reply_list = "";
+        for (var i = 0; i < allPosts.length; i++) {
+          if (allPosts[i].replies.length > 0) {
+            reply_list = "";
+            for (var j = 0; j < allPosts[i].replies.length; j++) {
+              reply_list +=
+                "<ul>" +
+                "<li>" +
+                allPosts[i].replies[j].reply +
+                "<button onclick=" +
+                `deleteReply(${j},${i})` +
+                ">" +
+                "Delete" +
+                "</button>&nbsp" +
+                "<button onclick=" +
+                `editreplyformData(${j},${i})` +
+                ">" +
+                "Edit" +
+                "</button><br><br>" +
+                "</li>" +
+                "</ul>";
+            }
+            //console.log(allPosts[i].replies[j]);
+          } else {
+            reply_list = "";
+          }
+          //if (allPosts[i].postedBy == currentUser) {
+          //var count = 1;
+          //table_td += "<tr>"+"<td>"+ allPosts[i].postContent +"</td>"+"<td>"+"<button onclick="+`formData(${allPosts[i].postId})`+">"+ "Edit" +"</button>"+"</td>" +"<td>"+"<button onclick="+`deletePost(${allPosts[i].postId})`+">"+ "Delete" +"</button>"+"</td>" +"</tr>"
+          //count++;
+          list_items +=
+            "<li>" +
+            allPosts[i].postContent +
+            "&nbsp" +
+            "<button onclick=" +
+            `formData(${allPosts[i].postId})` +
+            ">" +
+            "Edit" +
+            "</button>" +
+            "&nbsp" +
+            "<button onclick=" +
+            `deletePost(${allPosts[i].postId})` +
+            ">" +
+            "Delete" +
+            "</button>" +
+            "&nbsp" +
+            "<button onclick=" +
+            `replyformData(${allPosts[i].postId})` +
+            ">" +
+            "Reply" +
+            "</button>&nbsp&nbsp" +
+            "<i id='likebtn' class='fa fa-thumbs-up' style='font-size:24px;color:black' onclick=likes(" +
+            allPosts[i].postId +
+            ")> " +
+            allPosts[i].likesCount +
+            " </i><br><br><br>" +
+            reply_list +
+            "</li>";
+          //}
+        }
+        //console.log(list_items);
+        list.innerHTML = list_items;
+
+        //console.log(table);
+        //console.log(allPosts);
+      }
+
+      function deletePost(postid) {
+        console.log(currentUser);
+        document.getElementById("msg").innerHTML = "";
+        var allposts = JSON.parse(localStorage.getItem("posts"));
+        //console.log(allposts);
+        for (var i = 0; i < allposts.length; i++) {
+          if (allposts[i].postId == postid) {
+            if (allposts[i].postedBy == currentUser) {
+              console.log(i);
+              console.log(allposts[i]);
+              //console.log("deleted")
+              allposts.splice(i, 1);
+              console.log(allposts);
+            } else {
+              console.log("no match");
+              return (document.getElementById("msg").innerHTML =
+                "<h1>Unauthorized action</h1>");
+            }
+          }
+        }
+        localStorage.setItem("posts", JSON.stringify(allposts));
+        //return console.log(posts);
+        getMyComments();
+      }
+
+      function formData(postid) {
+        event.preventDefault();
+        console.log(postid);
+        document.getElementById("msg").innerHTML = "";
+        document.getElementById("editform").style.display = "none";
+        var allposts = JSON.parse(localStorage.getItem("posts"));
+        for (var i = 0; i < allposts.length; i++) {
+          if (allposts[i].postId == postid) {
+            if (allposts[i].postedBy == currentUser) {
+              var form = document.getElementById("editform");
+              form.style.display = "block";
+              document.getElementById("updatebtn").style.display = "block";
+              document.getElementById("replybtn").style.display = "none";
+              document.getElementById("editreplybtn").style.display = "none";
+              console.log(form);
+              var id = document.getElementById("postid");
+              id.value = postid;
+              console.log(id);
+            } else {
+              return (document.getElementById("msg").innerHTML =
+                "<h1>Unauthorized action</h1>");
+            }
+          }
+        }
+      }
+
+      function replyformData(postid) {
+        event.preventDefault();
+        document.getElementById("msg").innerHTML = "";
+        var form = document.getElementById("editform");
+        form.style.display = "block";
+        document.getElementById("replybtn").style.display = "block";
+        document.getElementById("updatebtn").style.display = "none";
+        document.getElementById("editreplybtn").style.display = "none";
+        document.getElementById("postid").value = postid;
+      }
+
+      function editreplyformData(reply, post) {
+        event.preventDefault();
+        document.getElementById("msg").innerHTML = "";
+        var form = document.getElementById("editform");
+        form.style.display = "block";
+        document.getElementById("editreplybtn").style.display = "block";
+        document.getElementById("replybtn").style.display = "none";
+        document.getElementById("updatebtn").style.display = "none";
+        document.getElementById("postid").style.display = "none";
+        replyIndex = reply;
+        postIndex = post;
+        console.log(replyIndex, postIndex);
+      }
+
+      function editreply() {
+        event.preventDefault();
+        document.getElementById("msg").innerHTML = "";
+        var updatedPostReplyContent = document.getElementById("postdata").value;
+        var allposts = JSON.parse(localStorage.getItem("posts"));
+        allposts[postIndex].replies[replyIndex].reply = updatedPostReplyContent;
+        localStorage.setItem("posts", JSON.stringify(allposts));
+        var form = document.getElementById("editform");
+        form.style.display = "none";
+        document.getElementById("postdata").value = "";
+        getMyComments();
+        console.log(allposts);
+      }
+
+      function updatethepost() {
+        event.preventDefault();
+        document.getElementById("msg").innerHTML = "";
+        var updatedPostContent = document.getElementById("postdata").value;
+        var postid = document.getElementById("postid").value;
+        console.log(updatedPostContent);
+        console.log(postid);
+        var allposts = JSON.parse(localStorage.getItem("posts"));
+        for (var i = 0; i < allposts.length; i++) {
+          if (allposts[i].postId == postid) {
+            if (allposts[i].postedBy == currentUser) {
+              allposts[i].postContent = updatedPostContent;
+              localStorage.setItem("posts", JSON.stringify(allposts));
+            } else {
+              console.log("no match unable to edit");
+            }
+          }
+        }
+        var form = document.getElementById("editform");
+        form.style.display = "none";
+        document.getElementById("postdata").value = "";
+        getMyComments();
+      }
+
+      function reply() {
+        event.preventDefault();
+        document.getElementById("msg").innerHTML = "";
+        var replyvalue = document.getElementById("postdata").value;
+
+        var postid = document.getElementById("postid").value;
+        var reply = {
+          reply: replyvalue,
+          replyBy: currentUser,
+          timeStamp: timeStamp(),
+        };
+        //console.log(postid)
+        var posts = JSON.parse(localStorage.getItem("posts"));
+        //posts[0].replies.push(reply);
+        //console.log(posts);
+        for (var i = 0; i < posts.length; i++) {
+          if (posts[i].postId == postid) {
+            posts[i].replies.push(reply);
+            localStorage.setItem("posts", JSON.stringify(posts));
+          }
+        }
+        var form = document.getElementById("editform");
+        form.style.display = "none";
+        document.getElementById("postdata").value = "";
+        getMyComments();
+      }
+
+      function deleteReply(replyIndex, postIndex) {
+        console.log(replyIndex);
+        console.log(postIndex);
+        document.getElementById("msg").innerHTML = "";
+        //console.log(repliedby);
+        var posts = JSON.parse(localStorage.getItem("posts"));
+        console.log(posts[postIndex].replies[replyIndex].replyBy, currentUser);
+        if (posts[postIndex].replies[replyIndex].replyBy == currentUser) {
+          posts[postIndex].replies.splice(replyIndex, 1);
+        }
+        localStorage.setItem("posts", JSON.stringify(posts));
+        getMyComments();
+      }
+
+      function likes(postid) {
+        event.preventDefault();
+        //console.log(postid);
+        document.getElementById("msg").innerHTML = "";
+        var posts = JSON.parse(localStorage.getItem("posts"));
+        for (var i = 0; i < posts.length; i++) {
+          if (posts[i].postId == postid) {
+            for (var j = 0; j < posts[i].likedBy.length; j++) {
+              if(posts[i].likedBy[j].user == currentUser){
+                //console.log("in loop")
+               if(posts[i].likedBy[j].status == true || posts[i].likedBy[j].status == false){
+                if(posts[i].likedBy[j].status == true){
+                  posts[i].likesCount--; 
+                posts[i].likedBy[j].status = false
+                localStorage.setItem("posts", JSON.stringify(posts));
+                document.getElementById("likebtn").style.color = "blue"
+                return getMyComments();
+                break;
+                }
+                if(posts[i].likedBy[j].status == false){
+                  posts[i].likesCount++; 
+                posts[i].likedBy[j].status = true
+                localStorage.setItem("posts", JSON.stringify(posts));
+                document.getElementById("likebtn").style.color = "blue"
+                return getMyComments();
+                break;
+                }
+                
+              }
+              }
+            }
+            posts[i].likesCount++;
+            posts[i].likedBy.push({
+              user: currentUser,
+              status: true,
+            });
+          }
+        }
+        localStorage.setItem("posts", JSON.stringify(posts));
+        getMyComments();
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,31 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>forgot password</title>
+</head>
+<body>
+    <form>
+        <input type="email" id="email"><br>
+        <input type="button" value="Getpassword" onclick="forgotPassword()">
+    </form>
+    <span id="msg"></span>
+    <script>
+        function forgotPassword() {
+            event.preventDefault();
+            document.getElementById("msg").innerHTML = "";
+            var email = document.getElementById("email").value;
+            if(email == ''){
+                return document.getElementById('msg').innerHTML = "<h1>Please enter valid input</h1>"
+            }
+            var users = JSON.parse(localStorage.getItem("users"));
+            for(var i = 0; i < users.length; i++){
+                if(users[i].email == email){
+                    return document.getElementById("msg").innerHTML = "<h1>your password is '"+users[i].password+"'</h1>"
+                }
+            }
+            return document.getElementById("msg").innerHTML = "<h1>User doesn't exists</h1>"
+        }
+    </script>
+</body>
+</html>
